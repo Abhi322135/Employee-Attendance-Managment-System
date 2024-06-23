@@ -1,0 +1,126 @@
+# IntelliJ IDEA specific files
+.idea/
+*.iml
+*.iws
+
+# Ignore log files and OS-specific files
+*.log
+*.swp
+.DS_Store
+
+# Byte-compiled / packaged class files
+*.class
+
+# Maven specific files
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+
+# Compiled class files
+*.class
+
+# Spring Boot specific files
+spring.log
+
+# Package files
+*.jar
+*.war
+*.ear
+
+# Project specific files
+*.project
+*.classpath
+*.settings/
+bin/
+
+# Test results
+/test-output/
+*.junit.xml
+/test-reports/
+
+# Log files
+/logs/
+*.log
+
+# Temporary files
+/tmp/
+*.tmp
+
+# Configuration files
+*.config
+*.cfg
+*.ini
+
+# Thumbnails
+._*
+
+# Python specific files
+*.pyc
+
+# Exclude all files starting with a dot (e.g. .env, .vscode)
+.gitignore
+!.gitignore
+!.mvn
+
+# Exclude target directory
+target/
+
+# Exclude IDE-specific files
+*.ipr
+*.iws
+*.bak
+*.swp
+*~.nib
+
+# Exclude Maven wrapper files
+.mvn/wrapper/maven-wrapper.jar
+
+# Windows specific files
+Thumbs.db
+ehthumbs.db
+
+# macOS specific files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Unix-specific files
+*.swp
+*~
+
+# Exclude Eclipse files
+.project
+.classpath
+.settings/
+bin/
+
+# Node specific files
+node_modules/
+
+# npm specific files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Log files
+logs/
+*.log
+
+# Temporary files
+temp/
+*.tmp
+
+# Ignore application properties
+application.properties
+application.yml
+.env
+
+# Ignore database files
+*.db
+
+# Ignore generated Swagger files
+*.json
+*.yaml
