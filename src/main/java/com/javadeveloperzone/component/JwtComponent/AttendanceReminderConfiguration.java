@@ -42,6 +42,14 @@ public class AttendanceReminderConfiguration {
         employees.stream().filter(this::isOnLeave).forEach((e)->emailService.sendSimpleMessage(e.getEmail(),"ATTENDANCE","You have not filled attendance field your leave is detected"));
     }
 
+    @Scheduled(cron = "0 0 16 * * MON-FRI") // Fire at 9:00 PM (21:00) from Monday to Friday
+    public void warningMail() {
+        List<AttendanceModel> attendanceRepoList=attendanceRepo.findAllByDate(date);
+        List<Employee> employees=collectAllAbsentEmployee(attendanceRepoList);
+        employees.stream().filter(this::isOnLeave).forEach((e)->emailService.sendSimpleMessage(e.getEmail(),"ATTENDANCE","You have not filled attendance field please fill it or it will " +
+                "be marked as absent"));
+    }
+
     @Scheduled(cron = "0 0 0 * * MON-FRI") // Fire at 12:00 AM (00:00) from Monday to Friday
     public void markAllAsAbsent() {
         List<AttendanceModel> attendanceRepoList;

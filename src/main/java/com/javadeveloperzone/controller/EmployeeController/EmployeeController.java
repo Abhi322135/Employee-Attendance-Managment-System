@@ -77,11 +77,18 @@ public class EmployeeController {
         this.employeeService.deleteAllEmployee();
     }
 
-    @PreAuthorize("#id==authentication.principal.id or hasAuthority('ADMIN')")
+    @PreAuthorize("#id==authentication.principal.id")
     @PostMapping("/attendance")
     public ResponseEntity<?> markAttendance(@RequestBody AttendanceModel attendanceModel,@RequestParam(name = "id") Long id) {
         employeeService.markAttendance(attendanceModel,id);
         return ResponseEntity.ok("Updated Attendance");
+    }
+
+    @PreAuthorize("#id==authentication.principal.id")
+    @PostMapping("/checkout")
+    public ResponseEntity<?> checkout(@RequestParam(name = "id") String id) {
+        employeeService.checkout(id);
+        return ResponseEntity.ok("Employee Checked out");
     }
 
     @PreAuthorize("#id==authentication.principal.id or hasAuthority('ADMIN')")
