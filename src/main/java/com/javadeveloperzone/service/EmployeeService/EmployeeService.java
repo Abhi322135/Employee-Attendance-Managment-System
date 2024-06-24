@@ -28,5 +28,5 @@ public interface EmployeeService {
 
     void leaveRequest(LeaveRequest leaveRequest, Long id);
 
-    void checkout(String id);
+    void checkout(Long id);
 }

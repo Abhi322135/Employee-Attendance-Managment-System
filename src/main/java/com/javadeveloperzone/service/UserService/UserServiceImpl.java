@@ -1,6 +1,9 @@
 package com.javadeveloperzone.service.UserService;
 
 import com.javadeveloperzone.component.JwtComponent.JWTTokenUtil;
+import com.javadeveloperzone.constant.BooleanFlag;
+import com.javadeveloperzone.constant.CookieConstant;
+import com.javadeveloperzone.constant.ErrorMessage;
 import com.javadeveloperzone.models.JwtAuthenticationModel.AuthenticationRequest;
 import com.javadeveloperzone.models.JwtAuthenticationModel.AuthenticationResponse;
 import com.javadeveloperzone.service.AuthenticationService.UserAuthenticationService;
@@ -39,15 +42,15 @@ public class UserServiceImpl implements UserService{
         try {
             authenticate(authenticationRequest.getEmail(),authenticationRequest.getPassword());
         } catch (Exception e) {
-            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,"Authentication failed because of wrong username or password");
+            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,ErrorMessage.AUTHENTICATION_FAILED);
         }
         final UserDetails userDetails= userAuthentication.loadUserByUsername(authenticationRequest.getEmail());
         final String jwt= jwtTokenUtil.generateToken((UserExtend) userDetails);
         if (authenticationRequest.getRememberMe()){
-            Cookie cookie = new Cookie("JWT-TOKEN", jwt);
-            cookie.setMaxAge(30 * 24 * 60 * 60);
+            Cookie cookie = new Cookie(CookieConstant.NAME, jwt);
+            cookie.setMaxAge(CookieConstant.VALIDITY);
             cookie.setPath("/");
-            cookie.setHttpOnly(true);
+            cookie.setHttpOnly(BooleanFlag.TRUE);
             response.addCookie(cookie);
         }
         return (new AuthenticationResponse(jwt));
@@ -57,17 +60,17 @@ public class UserServiceImpl implements UserService{
     public void logOut(HttpServletRequest httpServletRequest, HttpServletResponse response) {
         String token= null;
         try {
-            token = httpServletRequest.getHeader("Authorization").substring(7);
+            token = httpServletRequest.getHeader(CookieConstant.AUTHORIZATION).substring(7);
             System.out.println(token);
         } catch (Exception ignored) {
         }
 
-            Optional<Cookie> cookie= Arrays.stream(httpServletRequest.getCookies()).filter((c -> c.getName().equals("JWT-TOKEN")))
+            Optional<Cookie> cookie= Arrays.stream(httpServletRequest.getCookies()).filter((c -> c.getName().equals(CookieConstant.NAME)))
                     .findFirst();
         if (cookie.isPresent()){
             Cookie cookie1=cookie.get();
             cookie1.setMaxAge(0);
-            cookie1.setHttpOnly(true);
+            cookie1.setHttpOnly(BooleanFlag.TRUE);
             cookie1.setPath("/");
             response.addCookie(cookie1);
         }
@@ -77,15 +80,15 @@ public class UserServiceImpl implements UserService{
         jwtTokenUtil.invalidateToken(token);
     }
 
-    private void authenticate(String email, String password) throws Exception {
+    private void authenticate(String email, String password) {
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
         } catch (DisabledException e) {
-            ExceptionUtils.sendMessage(HttpStatus.UNAUTHORIZED,"USER_DISABLED");
+            ExceptionUtils.sendMessage(HttpStatus.UNAUTHORIZED, ErrorMessage.USER_DISABLED);
         } catch (BadCredentialsException e) {
-            ExceptionUtils.sendMessage(HttpStatus.UNAUTHORIZED,"INVALID_CREDENTIALS");
+            ExceptionUtils.sendMessage(HttpStatus.UNAUTHORIZED,ErrorMessage.INVALID_CREDENTIALS);
         } catch (Exception e) {
-            ExceptionUtils.sendMessage(HttpStatus.FORBIDDEN,"Incorrect Username or Password");
+            ExceptionUtils.sendMessage(HttpStatus.FORBIDDEN,ErrorMessage.INVALID_CREDENTIALS);
         }
     }
 }

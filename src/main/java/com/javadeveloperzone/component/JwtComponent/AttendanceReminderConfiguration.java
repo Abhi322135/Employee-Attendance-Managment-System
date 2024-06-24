@@ -1,5 +1,6 @@
 package com.javadeveloperzone.component.JwtComponent;
 
+import com.javadeveloperzone.constant.MailTemplate;
 import com.javadeveloperzone.models.EmployeeModels.Employee;
 import com.javadeveloperzone.models.FolderModel.AttendanceModel;
 import com.javadeveloperzone.models.FolderModel.LeaveRequest;
@@ -9,10 +10,12 @@ import com.javadeveloperzone.repository.EmployeeRepository;
 import com.javadeveloperzone.repository.LeaveRepo;
 import com.javadeveloperzone.service.MailService.EmailService;
 import com.javadeveloperzone.utils.DateUtils;
+import com.javadeveloperzone.utils.TimeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,7 +31,7 @@ public class AttendanceReminderConfiguration {
 
     @Autowired
     public AttendanceReminderConfiguration(LeaveRepo leaveRepo, AttendanceRepo attendanceRepo, EmployeeRepository employeeRepository,
-                            EmailService emailService) {
+                                           EmailService emailService) {
         this.leaveRepo = leaveRepo;
         this.attendanceRepo = attendanceRepo;
         this.employeeRepository = employeeRepository;
@@ -39,18 +42,28 @@ public class AttendanceReminderConfiguration {
     public void scheduleTask() {
         List<AttendanceModel> attendanceRepoList=attendanceRepo.findAllByDate(date);
         List<Employee> employees=collectAllAbsentEmployee(attendanceRepoList);
-        employees.stream().filter(this::isOnLeave).forEach((e)->emailService.sendSimpleMessage(e.getEmail(),"ATTENDANCE","You have not filled attendance field your leave is detected"));
+        employees.stream().filter(this::isOnLeave).forEach((e)->emailService.
+                sendSimpleMessage("ATTENDANCE", MailTemplate.LOGIN_REMAINDER_TEMPLATE,e.getEmail()));
     }
 
-    @Scheduled(cron = "0 0 16 * * MON-FRI") // Fire at 9:00 PM (21:00) from Monday to Friday
+    @Scheduled(cron = "0 0 20 * * MON-FRI") // Fire at 9:00 PM (21:00) from Monday to Friday
     public void warningMail() {
         List<AttendanceModel> attendanceRepoList=attendanceRepo.findAllByDate(date);
         List<Employee> employees=collectAllAbsentEmployee(attendanceRepoList);
-        employees.stream().filter(this::isOnLeave).forEach((e)->emailService.sendSimpleMessage(e.getEmail(),"ATTENDANCE","You have not filled attendance field please fill it or it will " +
-                "be marked as absent"));
+        employees.stream().filter(this::isOnLeave)
+                .forEach( (e)-> emailService.sendSimpleMessage("ATTENDANCE", MailTemplate.LOGIN_REMAINDER_TEMPLATE,e.getEmail()));
     }
 
-    @Scheduled(cron = "0 0 0 * * MON-FRI") // Fire at 12:00 AM (00:00) from Monday to Friday
+    @Scheduled(cron = "0 0 20 * * MON-FRI") // Fire at 8:00 PM (21:00) from Monday to Friday
+    public void checkOutAllPresentEmployee() {
+        List<AttendanceModel> attendanceRepoList=attendanceRepo.findAllByDate(date);
+        attendanceRepoList.stream().filter(AttendanceModel::getPresent).forEach((e)->{
+            e.setTimeout(TimeUtils.formatTime(LocalTime.now()));
+            attendanceRepo.save(e);
+        });
+    }
+
+    @Scheduled(cron = "0 0 12 * * MON-FRI") // Fire at 12:00 AM (00:00) from Monday to Friday
     public void markAllAsAbsent() {
         List<AttendanceModel> attendanceRepoList;
         List<Employee> employees=employeeRepository.findAll();
@@ -64,6 +77,8 @@ public class AttendanceReminderConfiguration {
         attendanceModel.setDate(date);
         attendanceModel.setEmployeeId(e.getId());
         attendanceModel.setManagerId(e.getManagerID());
+        attendanceModel.setTimeout(null);
+        attendanceModel.setTimein(null);
         return attendanceModel;
     }
 

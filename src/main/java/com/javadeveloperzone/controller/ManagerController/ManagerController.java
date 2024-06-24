@@ -1,5 +1,7 @@
 package com.javadeveloperzone.controller.ManagerController;
 
+import com.javadeveloperzone.constant.APIMessages;
+import com.javadeveloperzone.constant.LeaveActions;
 import com.javadeveloperzone.models.ManagerRelatedModels.Manager;
 import com.javadeveloperzone.service.ManagerService.ManagerService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,15 +48,15 @@ public class ManagerController {
     public ResponseEntity<?> approveOrRejectLeave(@RequestParam(name = "id") Long id,@RequestParam(name = "leaveId") String leaveId,
                                                   @RequestParam(name = "action") boolean action){
         this.managerService.leaveAction(id,leaveId,action);
-        if (!action) return ResponseEntity.ok("Leave Rejected");
-        return ResponseEntity.ok("Leave Approved");
+        if (!action) return ResponseEntity.ok(LeaveActions.LEAVE_REJECT);
+        return ResponseEntity.ok(LeaveActions.LEAVE_APPROVED);
     }
 
     @PostAuthorize("hasAuthority('ADMIN')")
     @PatchMapping("/update/{id}")
     public ResponseEntity<?> updateOneManager(@PathVariable Long id,@RequestBody Manager patchManager){
         this.managerService.updateOneManager(id,patchManager);
-        return ResponseEntity.ok("Data Updated");
+        return ResponseEntity.ok(APIMessages.DATA_UPDATED);
     }
 
     @DeleteMapping("/delete/all")

@@ -1,5 +1,6 @@
 package com.javadeveloperzone.controller;
 
+import com.javadeveloperzone.constant.LoginConstant;
 import com.javadeveloperzone.models.JwtAuthenticationModel.AuthenticationRequest;
 import com.javadeveloperzone.service.UserService.UserService;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,6 @@ public class LoginLogoutController {
     public ResponseEntity<?> logOut(HttpServletRequest httpServletRequest,HttpServletResponse response) {
         userService.logOut(httpServletRequest,response);
         SecurityContextHolder.clearContext();
-        return ResponseEntity.ok("User Logged Out");
+        return ResponseEntity.ok(LoginConstant.LOGGED_OUT_MESSAGE);
     }
 }

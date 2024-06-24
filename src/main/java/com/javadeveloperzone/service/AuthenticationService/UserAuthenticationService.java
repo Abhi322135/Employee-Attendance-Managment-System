@@ -1,5 +1,6 @@
 package com.javadeveloperzone.service.AuthenticationService;
 
+import com.javadeveloperzone.constant.ErrorMessage;
 import com.javadeveloperzone.models.AdminRelatedModels.Admin;
 import com.javadeveloperzone.models.EmployeeModels.Employee;
 import com.javadeveloperzone.models.FolderModel.Role;
@@ -48,19 +49,19 @@ public class UserAuthenticationService implements UserDetailsService {
             role=manager.get().getRole();
         } else if (admin.isPresent()) {
             role=admin.get().getRole();
-        } else ExceptionUtils.sendMessage(HttpStatus.NOT_FOUND,"Employee or Manager not found with email: " + email);
+        } else ExceptionUtils.sendMessage(HttpStatus.NOT_FOUND, ErrorMessage.EMPLOYEE_MANAGER_NOT_FOUND + email);
         if(role.equals(Role.EMPLOYEE) && employee.isPresent())
         {
-            roles = List.of(new SimpleGrantedAuthority("EMPLOYEE"));
+            roles = List.of(new SimpleGrantedAuthority(Role.EMPLOYEE.name()));
             return new UserExtend(new User(employee.get().getEmail(), employee.get().getPassword(),roles),employee.get().getId());
         }
         else if(role.equals(Role.MANAGER) && manager.isPresent())
         {
-            roles = List.of(new SimpleGrantedAuthority("MANAGER"));
+            roles = List.of(new SimpleGrantedAuthority(Role.MANAGER.name()));
             return new UserExtend(new User(manager.get().getEmail(), manager.get().getPassword(),roles),manager.get().getId());
         }
         else if(role.equals(Role.ADMIN) && admin.isPresent()){
-            roles = List.of(new SimpleGrantedAuthority("ADMIN"));
+            roles = List.of(new SimpleGrantedAuthority(Role.ADMIN.name()));
             return new UserExtend(new User(admin.get().getEmail(), admin.get().getPassword(),roles),12L);
         }
         return null;
