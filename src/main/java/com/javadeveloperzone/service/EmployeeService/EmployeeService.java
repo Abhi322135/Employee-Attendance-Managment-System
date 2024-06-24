@@ -27,4 +27,6 @@ public interface EmployeeService {
     void markAttendance(AttendanceModel attendanceModel, Long id);
 
     void leaveRequest(LeaveRequest leaveRequest, Long id);
+
+    void checkout(String id);
 }

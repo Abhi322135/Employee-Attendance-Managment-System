@@ -11,6 +11,7 @@ import com.javadeveloperzone.service.MailService.EmailService;
 import com.javadeveloperzone.service.SequenceGeneratorService.EmployeeSequenceGeneratorService;
 import com.javadeveloperzone.utils.DateUtils;
 import com.javadeveloperzone.utils.ExceptionUtils;
+import com.javadeveloperzone.utils.TimeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -26,6 +27,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -33,7 +35,7 @@ import java.util.regex.Pattern;
 @Service
 public class EmployeeServiceImpl implements EmployeeService {
 
-    private static final Query query=new Query();
+    private final Query query;
     private final EmployeeRepository employeeRepository;
 
     private final EmployeeSequenceGeneratorService sequenceGeneratorService;
@@ -48,9 +50,10 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final EmailService emailService;
 
     @Autowired
-    public EmployeeServiceImpl(EmployeeRepository employeeRepository, EmployeeSequenceGeneratorService sequenceGeneratorService,
+    public EmployeeServiceImpl(Query query, EmployeeRepository employeeRepository, EmployeeSequenceGeneratorService sequenceGeneratorService,
                                ManagerRepository managerRepository, AdminRepository adminRepository, PasswordEncoder passwordEncoder,
                                AttendanceRepo attendanceRepo, LeaveRepo leaveRepo, MongoTemplate mongoTemplate, EmailService emailService) {
+        this.query = query;
         this.employeeRepository = employeeRepository;
         this.sequenceGeneratorService = sequenceGeneratorService;
         this.managerRepository = managerRepository;
@@ -182,7 +185,6 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public List<Employee> getEmployeeList(Employee employee) {
-        Query query = new Query();
         final List<String> fields=new ArrayList<>();
         final List<String> value=new ArrayList<>();
         if (employee.getEmail()!=null){
@@ -242,6 +244,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         else if(attendance.isPresent() && !attendance.get().getPresent()){
             AttendanceModel model=attendance.get();
             model.setPresent(true);
+            model.setTimein(TimeUtils.formatTime(LocalTime.now()));
             attendanceRepo.save(model);
         }
         else
@@ -270,6 +273,17 @@ public class EmployeeServiceImpl implements EmployeeService {
         leaveRequest.setLeaveStatus(LeaveStatus.PENDING);
         emailService.sendSimpleMessage(manager.get().getEmail(),"LEAVE APPROVAL",employee.get().getName()+" applied for leave");
         leaveRepo.save(leaveRequest);
+    }
+
+    @Override
+    public void checkout(String id) {
+        AttendanceModel attendanceModel;
+         if (attendanceRepo.findById(id).isPresent()) {
+             attendanceModel=attendanceRepo.findById(id).get();
+             attendanceModel.setTimeout(TimeUtils.formatTime(LocalTime.now()));
+             attendanceRepo.save(attendanceModel);
+         }
+         else ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,"The attendance id does not exist");
     }
 
     private boolean checkLeave(String date) {

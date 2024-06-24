@@ -17,10 +17,10 @@ apply plugin: 'java'                                // plugin for java
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'// plugin for spring boot framework
 
-jar {
-    baseName = 'spring-boot-gradle-example'             // jar file name
-    version =  '1.0.0'                                  // application version
-}
+//jar {
+//    baseName = 'spring-boot-gradle-example'             // jar file name
+//    version =  '1.0.0'                                  // application version
+//}
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web' // web application dependency
@@ -33,6 +33,9 @@ dependencies {
     implementation group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.0'
 }
 
+bootJar {
+    archiveFileName = "spring-boot-gradle-example.jar"
+}
 
 sourceCompatibility = 11                             // for Java 11
 targetCompatibility = 11

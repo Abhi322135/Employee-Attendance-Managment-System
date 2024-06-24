@@ -12,7 +12,8 @@ public class AttendanceModel {
     private Long employeeId;
     private Long managerId;
     private Boolean present;
-
+    private String timein;
+    private String timeout;
 
     public String getDate() {
         return date;
@@ -52,5 +53,21 @@ public class AttendanceModel {
 
     public void setManagerId(Long managerId) {
         this.managerId = managerId;
+    }
+
+    public String getTimein() {
+        return timein;
+    }
+
+    public void setTimein(String timein) {
+        this.timein = timein;
+    }
+
+    public String getTimeout() {
+        return timeout;
+    }
+
+    public void setTimeout(String timeout) {
+        this.timeout = timeout;
     }
 }
