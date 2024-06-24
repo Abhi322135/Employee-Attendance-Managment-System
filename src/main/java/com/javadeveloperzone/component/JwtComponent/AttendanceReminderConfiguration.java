@@ -43,7 +43,7 @@ public class AttendanceReminderConfiguration {
         List<AttendanceModel> attendanceRepoList=attendanceRepo.findAllByDate(date);
         List<Employee> employees=collectAllAbsentEmployee(attendanceRepoList);
         employees.stream().filter(this::isOnLeave).forEach((e)->emailService.
-                sendSimpleMessage("ATTENDANCE", MailTemplate.LOGIN_REMAINDER_TEMPLATE,e.getEmail()));
+                sendSimpleMessage("ATTENDANCE", "<h>You were not on leave and did not login so unpaid leave</h>",e.getEmail()));
     }
 
     @Scheduled(cron = "0 0 20 * * MON-FRI") // Fire at 9:00 PM (21:00) from Monday to Friday
@@ -54,7 +54,7 @@ public class AttendanceReminderConfiguration {
                 .forEach( (e)-> emailService.sendSimpleMessage("ATTENDANCE", MailTemplate.LOGIN_REMAINDER_TEMPLATE,e.getEmail()));
     }
 
-    @Scheduled(cron = "0 0 20 * * MON-FRI") // Fire at 8:00 PM (21:00) from Monday to Friday
+    @Scheduled(cron = "0 0 20 * * MON-FRI") // Fire at 8:00 PM (20:00) from Monday to Friday
     public void checkOutAllPresentEmployee() {
         List<AttendanceModel> attendanceRepoList=attendanceRepo.findAllByDate(date);
         attendanceRepoList.stream().filter(AttendanceModel::getPresent).forEach((e)->{
@@ -63,7 +63,7 @@ public class AttendanceReminderConfiguration {
         });
     }
 
-    @Scheduled(cron = "0 0 12 * * MON-FRI") // Fire at 12:00 AM (00:00) from Monday to Friday
+    @Scheduled(cron = "0 0 0 * * MON-FRI") // Fire at 12:00 AM (00:00) from Monday to Friday
     public void markAllAsAbsent() {
         List<AttendanceModel> attendanceRepoList;
         List<Employee> employees=employeeRepository.findAll();
