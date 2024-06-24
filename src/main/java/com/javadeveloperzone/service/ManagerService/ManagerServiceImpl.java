@@ -1,5 +1,9 @@
 package com.javadeveloperzone.service.ManagerService;
 
+import com.javadeveloperzone.constant.BooleanFlag;
+import com.javadeveloperzone.constant.ErrorMessage;
+import com.javadeveloperzone.constant.LeaveActions;
+import com.javadeveloperzone.constant.MailMessages;
 import com.javadeveloperzone.models.AdminRelatedModels.Admin;
 import com.javadeveloperzone.models.EmployeeModels.Employee;
 import com.javadeveloperzone.models.FolderModel.LeaveRequest;
@@ -53,7 +57,7 @@ public class ManagerServiceImpl implements ManagerService{
         Optional<Employee> optionalEmployee=employeeRepository.findByEmail(manager.getEmail());
         Optional<Admin> optionalAdmin=adminRepository.findByEmail(manager.getEmail());
         if(optionalManager.isPresent() || optionalEmployee.isPresent() || optionalAdmin.isPresent()) {
-            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,"Please Enter Unique email address");
+            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST, ErrorMessage.UNIQUE_EMAIL);
         }
 
         manager.setId(sequenceGeneratorService.generateSequence(Manager.SEQUENCE_NAME));
@@ -81,10 +85,10 @@ public class ManagerServiceImpl implements ManagerService{
         Optional<Manager> list=managerRepository.findById(id);
         Manager existingManager=list.orElse(null);
         if (list.isEmpty()){
-            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,"Manager Name not found");
+            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST, ErrorMessage.MANAGER_NOT_FOUND);
         }
         if (putManager.getId()!=null){
-            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,"ID Updation not allowed");
+            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,ErrorMessage.MANAGER_ID_UPDATION_NOT_ALLOWED);
         }
         existingManager.setSkill(putManager.getSkill());
         existingManager.setEmail(putManager.getEmail());
@@ -108,7 +112,7 @@ public class ManagerServiceImpl implements ManagerService{
             String line;
             InputStream is = file.getInputStream();
             br = new BufferedReader(new InputStreamReader(is));
-            boolean skip=true;
+            boolean skip= BooleanFlag.TRUE;
             while ((line = br.readLine()) != null) {
                 if(!skip) {
                     String[] data = line.split(",");
@@ -119,7 +123,7 @@ public class ManagerServiceImpl implements ManagerService{
                     man.setSkill(Collections.singletonList(data[3]));
                     man.setId(sequenceGeneratorService.generateSequence(Manager.SEQUENCE_NAME));
                 }
-                skip=false;
+                skip=BooleanFlag.FALSE;
             }
 
         } catch (IOException e) {
@@ -133,10 +137,10 @@ public class ManagerServiceImpl implements ManagerService{
     public void updateOneManager(Long id, Manager manager) {
         Optional<Manager> list=managerRepository.findById(id);
         if (list.isEmpty()){
-            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,"Manager Name not found");
+            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,ErrorMessage.MANAGER_NOT_FOUND);
         }
         if (manager.getId()!=null){
-            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,"ID Updation is not allowed");
+            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,ErrorMessage.MANAGER_ID_UPDATION_NOT_ALLOWED);
         }
         if (manager.getName()!=null){
             list.get().setName(manager.getName());
@@ -158,7 +162,7 @@ public class ManagerServiceImpl implements ManagerService{
         try {
             managerRepository.deleteById(id);
         } catch (Exception e) {
-            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,"Manager id is not present");
+            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,ErrorMessage.MANAGER_NOT_FOUND);
         }
         List<Employee> employees=employeeRepository.findAllByManagerID(id);
         employees.forEach(employeeRepository::delete);
@@ -169,21 +173,20 @@ public class ManagerServiceImpl implements ManagerService{
         Optional<LeaveRequest> getLeaveRequest=leaveRepo.findById(leaveId);
 
         if (getLeaveRequest.isEmpty()){
-            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,"Leave Request is not found");
+            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,ErrorMessage.LEAVE_REQUEST_NOT_FOUND);
         }
         if (getLeaveRequest.get().getLeaveStatus()==LeaveStatus.APPROVED){
-            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,"Leave Request is already approved");
+            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,ErrorMessage.LEAVE_REQUEST_ALREADY_APPROVED);
         }
         Optional<Employee> employee=employeeRepository.findById(getLeaveRequest.get().getEmployeeId());
         if (action){
             getLeaveRequest.get().setLeaveStatus(LeaveStatus.APPROVED);
-            emailService.sendSimpleMessage(employee.get().getEmail(),"LEAVE Action","Your leave is approved");
+            emailService.sendSimpleMessage(LeaveActions.LEAVE_APPROVED, MailMessages.LEAVE_ACCEPTED,employee.get().getEmail());
             leaveRepo.save(getLeaveRequest.get());
         }
         else {
             getLeaveRequest.get().setLeaveStatus(LeaveStatus.REJECTED);
-            emailService.sendSimpleMessage(employee.get().getEmail(),"LEAVE Action","Your leave is rejected");
-            leaveRepo.deleteById(leaveId);
+            emailService.sendSimpleMessage(LeaveActions.LEAVE_REJECT,MailMessages.LEAVE_REJECTED,employee.get().getEmail());
         }
     }
 

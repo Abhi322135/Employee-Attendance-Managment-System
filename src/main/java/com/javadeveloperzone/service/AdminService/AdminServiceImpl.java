@@ -1,5 +1,6 @@
 package com.javadeveloperzone.service.AdminService;
 
+import com.javadeveloperzone.constant.ErrorMessage;
 import com.javadeveloperzone.models.AdminRelatedModels.Admin;
 import com.javadeveloperzone.models.EmployeeModels.Employee;
 import com.javadeveloperzone.models.ManagerRelatedModels.Manager;
@@ -36,7 +37,7 @@ public class AdminServiceImpl implements AdminService{
         Optional<Manager> optionalManager=managerRepository.findByEmail(admin.getEmail());
         Optional<Employee> optionalEmployee=employeeRepository.findByEmail(admin.getEmail());
         if (optionalAdmin.isPresent() || optionalManager.isPresent() || optionalEmployee.isPresent()){
-            ExceptionUtils.sendMessage("Admin is Already Present");
+            ExceptionUtils.sendMessage(ErrorMessage.ADMIN_PRESENT);
         }
         admin.setPassword(passwordEncoder.encode(admin.getPassword()));
        adminRepository.save(admin);

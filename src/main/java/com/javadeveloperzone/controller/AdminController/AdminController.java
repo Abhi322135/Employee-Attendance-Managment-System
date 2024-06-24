@@ -1,5 +1,6 @@
 package com.javadeveloperzone.controller.AdminController;
 
+import com.javadeveloperzone.constant.APIMessages;
 import com.javadeveloperzone.models.AdminRelatedModels.Admin;
 import com.javadeveloperzone.service.AdminService.AdminService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,12 +20,12 @@ public class AdminController {
     @PostMapping("/save")
     public ResponseEntity<?> saveAdmin(@RequestBody Admin admin){
         adminService.saveAdmin(admin);
-        return ResponseEntity.ok("Admin Saved");
+        return ResponseEntity.ok(APIMessages.ADMIN_SAVED);
     }
 
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteAdmin(String id){
         adminService.deleteAdmin(id);
-        return ResponseEntity.ok("Admin Deleted");
+        return ResponseEntity.ok(APIMessages.ADMIN_DELETED);
     }
 }

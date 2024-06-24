@@ -1,6 +1,7 @@
 package com.javadeveloperzone.config;
 
 import com.javadeveloperzone.component.JwtComponent.JWTRequestFilter;
+import com.javadeveloperzone.models.FolderModel.Role;
 import com.javadeveloperzone.service.AuthenticationService.UserAuthenticationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -37,11 +38,11 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http.csrf().disable().authorizeRequests()
                 .antMatchers("/authenticate/user").permitAll()
-                .antMatchers("/**/logout/user").hasAnyAuthority("ADMIN","MANAGER","EMPLOYEE")
-                .antMatchers("/**/admin/**").hasAuthority("ADMIN")
-                .antMatchers("/**/save").hasAuthority("ADMIN")
-                .antMatchers("/**/all").hasAuthority("ADMIN")
-                .antMatchers("/**/delete").hasAuthority("ADMIN")
+                .antMatchers("/**/logout/user").hasAnyAuthority(Role.ADMIN.name(),Role.MANAGER.name(),Role.EMPLOYEE.name())
+                .antMatchers("/**/admin/**").hasAuthority(Role.ADMIN.name())
+                .antMatchers("/**/save").hasAuthority(Role.ADMIN.name())
+                .antMatchers("/**/all").hasAuthority(Role.ADMIN.name())
+                .antMatchers("/**/delete").hasAuthority(Role.ADMIN.name())
                 .anyRequest().authenticated()
                 .and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and().addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);

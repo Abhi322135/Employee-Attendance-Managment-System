@@ -1,5 +1,7 @@
 package com.javadeveloperzone.component.JwtComponent;
 
+import com.javadeveloperzone.constant.CookieConstant;
+import com.javadeveloperzone.constant.JWTMessages;
 import com.javadeveloperzone.service.AuthenticationService.UserAuthenticationService;
 import com.javadeveloperzone.service.AuthenticationService.UserExtend;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -34,17 +36,17 @@ public class JWTRequestFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull FilterChain chain)
             throws ServletException, IOException {
 
-        final String requestTokenHeader = request.getHeader("Authorization");
+        final String requestTokenHeader = request.getHeader(CookieConstant.AUTHORIZATION);
         String username = null;
         String jwtToken = null;
-        if (requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
+        if (requestTokenHeader != null && requestTokenHeader.startsWith(CookieConstant.BEARER)) {
             jwtToken = requestTokenHeader.substring(7);
             try {
                 username = jwtTokenUtil.getEmailFromToken(jwtToken);
             } catch (IllegalArgumentException e) {
-                System.out.println("Unable to get JWT Token");
+                System.out.println(JWTMessages.JWT_NOT_FOUND);
             } catch (ExpiredJwtException e) {
-                System.out.println("JWT Token has expired");
+                System.out.println(JWTMessages.JWT_EXPIRED);
             }
         }
         else if (requestTokenHeader==null ) {
@@ -54,7 +56,7 @@ public class JWTRequestFilter extends OncePerRequestFilter {
                 username = jwtTokenUtil.getEmailFromToken(jwtToken);
             }
         } else {
-            logger.warn("JWT Token does not begin with Bearer String");
+            logger.warn(JWTMessages.JWT_NOT_BEARER);
         }
         if (jwtTokenUtil.isTokenInvalidated(jwtToken) || jwtToken==null){
             username=null;
@@ -79,7 +81,7 @@ public class JWTRequestFilter extends OncePerRequestFilter {
     private String extractTokenFromCookie(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
-           Cookie cookie1= Arrays.stream(cookies).filter((cookie)->cookie.getName().equals("JWT-TOKEN")).findFirst().orElse(null);
+           Cookie cookie1= Arrays.stream(cookies).filter((cookie)->cookie.getName().equals(CookieConstant.NAME)).findFirst().orElse(null);
            if (cookie1!=null) return cookie1.getValue();
         }
         return null;

@@ -1,5 +1,6 @@
 package com.javadeveloperzone.controller.EmployeeController;
 
+import com.javadeveloperzone.constant.APIMessages;
 import com.javadeveloperzone.models.EmployeeModels.Employee;
 import com.javadeveloperzone.models.FolderModel.AttendanceModel;
 import com.javadeveloperzone.models.FolderModel.LeaveRequest;
@@ -69,7 +70,7 @@ public class EmployeeController {
     @PatchMapping("/update/{id}")
     public ResponseEntity<?> updateOneEmployee(@PathVariable Long id,@RequestBody Employee patchEmployee){
         this.employeeService.updateOneEmployee(id,patchEmployee);
-        return ResponseEntity.ok("Data Updated");
+        return ResponseEntity.ok(APIMessages.DATA_UPDATED);
     }
 
     @DeleteMapping("/delete/all")
@@ -81,20 +82,20 @@ public class EmployeeController {
     @PostMapping("/attendance")
     public ResponseEntity<?> markAttendance(@RequestBody AttendanceModel attendanceModel,@RequestParam(name = "id") Long id) {
         employeeService.markAttendance(attendanceModel,id);
-        return ResponseEntity.ok("Updated Attendance");
+        return ResponseEntity.ok(APIMessages.ATTENDANCE_UPDATED);
     }
 
     @PreAuthorize("#id==authentication.principal.id")
     @PostMapping("/checkout")
-    public ResponseEntity<?> checkout(@RequestParam(name = "id") String id) {
+    public ResponseEntity<?> checkout(@RequestParam(name = "id") Long id) {
         employeeService.checkout(id);
-        return ResponseEntity.ok("Employee Checked out");
+        return ResponseEntity.ok(APIMessages.EMPLOYEE_CHECKED_OUT);
     }
 
     @PreAuthorize("#id==authentication.principal.id or hasAuthority('ADMIN')")
     @PostMapping("/leave")
     public ResponseEntity<?> leaveRequest(@RequestBody LeaveRequest leaveRequest, @RequestParam(name = "id") Long id) {
         employeeService.leaveRequest(leaveRequest,id);
-        return ResponseEntity.ok("Leave Request Sent to Manager");
+        return ResponseEntity.ok(APIMessages.LEAVE_REQUEST_SENT);
     }
 }

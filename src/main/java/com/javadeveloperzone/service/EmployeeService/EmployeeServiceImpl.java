@@ -1,10 +1,15 @@
 package com.javadeveloperzone.service.EmployeeService;
 
+import com.javadeveloperzone.constant.BooleanFlag;
+import com.javadeveloperzone.constant.EmployeeConstants;
+import com.javadeveloperzone.constant.ErrorMessage;
+import com.javadeveloperzone.constant.MailMessages;
 import com.javadeveloperzone.models.AdminRelatedModels.Admin;
 import com.javadeveloperzone.models.EmployeeModels.Employee;
 import com.javadeveloperzone.models.FolderModel.AttendanceModel;
 import com.javadeveloperzone.models.FolderModel.LeaveRequest;
 import com.javadeveloperzone.models.FolderModel.LeaveStatus;
+import com.javadeveloperzone.models.FolderModel.Weekends;
 import com.javadeveloperzone.models.ManagerRelatedModels.Manager;
 import com.javadeveloperzone.repository.*;
 import com.javadeveloperzone.service.MailService.EmailService;
@@ -21,14 +26,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.time.LocalTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 
@@ -71,11 +78,11 @@ public class EmployeeServiceImpl implements EmployeeService {
            Optional<Manager> managerOptional=managerRepository.findByEmail(employee.getEmail());
            Optional<Admin> admin=adminRepository.findByEmail(employee.getEmail());
            if(list.isPresent() || managerOptional.isPresent() || admin.isPresent()) {
-               ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,"Please Enter Unique name");
+               ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,ErrorMessage.UNIQUE_EMAIL);
            }
            boolean managerExist= managerRepository.findById(employee.getManagerID()).isPresent();
            if (!managerExist){
-               ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,"Manager ID Does not exist");
+               ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,ErrorMessage.MANAGER_NOT_FOUND);
            }
            employee.setId(sequenceGeneratorService.generateSequence(Employee.SEQUENCE_NAME));
            employee.setPassword(passwordEncoder.encode(employee.getPassword()));
@@ -95,7 +102,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     public Optional<Employee> findByEmail(String email) {
         Optional<Employee> employee=employeeRepository.findByEmail(email);
         if (employee.isEmpty()){
-            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,"Employee is Not present");
+            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,ErrorMessage.EMPLOYEE_NOT_FOUND);
         }
           return employeeRepository.findByEmail(email);
     }
@@ -105,10 +112,10 @@ public class EmployeeServiceImpl implements EmployeeService {
         Optional<Employee> list=employeeRepository.findById(id);
         Employee existingEmployee=list.orElse(null);
         if (list.isEmpty()){
-            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,"Employee Name not found");
+            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,ErrorMessage.EMPLOYEE_NOT_FOUND);
         }
         if (!managerRepository.existsById(putEmployee.getManagerID())){
-            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,"Manager Does not exist");
+            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST, ErrorMessage.MANAGER_NOT_FOUND);
         }
         existingEmployee.setManagerID(putEmployee.getManagerID());
         existingEmployee.setSkill(putEmployee.getSkill());
@@ -157,7 +164,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     public void updateOneEmployee(Long id,Employee patchEmployee) {
         Optional<Employee> list=employeeRepository.findById(id);
         if (list.isEmpty()){
-            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,"Employee Name not found");
+            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,ErrorMessage.EMPLOYEE_NOT_FOUND);
         }
         if (patchEmployee.getName()!=null){
             list.get().setName(patchEmployee.getName());
@@ -174,7 +181,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         if(patchEmployee.getManagerID()!=null && managerRepository.existsById(patchEmployee.getManagerID())){
             list.get().setManagerID(patchEmployee.getManagerID());
         }
-        else ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,"Manager ID not found");
+        else ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,ErrorMessage.MANAGER_NOT_FOUND);
         employeeRepository.save(list.get());
     }
 
@@ -217,33 +224,33 @@ public class EmployeeServiceImpl implements EmployeeService {
     public void markAttendance(AttendanceModel attendanceModel, Long id) {
         String today =DateUtils.getDayOfTheWeek(DateUtils.parseTodaysDate());
 
-        if (today.equalsIgnoreCase("Sunday") || today.equalsIgnoreCase("Saturday")){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Today is Saturday or Sunday so no login");
+        if (today.equalsIgnoreCase(Weekends.SATURDAY.name()) || today.equalsIgnoreCase(Weekends.SUNDAY.name())){
+            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,ErrorMessage.TODAY_SATURDAY_SUNDAY);
         }
         attendanceModel.setDate(DateUtils.parseTodaysDate());
-        attendanceModel.setPresent(true);
+        attendanceModel.setPresent(BooleanFlag.TRUE);
         Optional<Employee> employee=employeeRepository.findById(id);
 
         if (employee.isEmpty()){
-            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,"The employee does not exist");
+            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,ErrorMessage.EMPLOYEE_NOT_FOUND);
         }
         if (attendanceModel.getManagerId()!=employee.get().getManagerID()){
-            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,"Manager ID Does not exist");
+            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,ErrorMessage.MANAGER_NOT_FOUND);
         }
         if(checkLeave(attendanceModel.getDate())){
-            ExceptionUtils.sendMessage("Today you are on leave");
+            ExceptionUtils.sendMessage(EmployeeConstants.TODAY_ON_LEAVE);
         }
         if (DateUtils.getHours()>=20){
-            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,"Today you are on leave cannot mark as present");
+            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,ErrorMessage.CHECK_IN_CHECK_OUT_OVER);
         }
         List<AttendanceModel> attendanceModel1=attendanceRepo.findAllByDate(DateUtils.parseTodaysDate()        );
         Optional<AttendanceModel> attendance=attendanceModel1.stream().filter((x)-> x.getEmployeeId().equals(id)).findFirst();
         if (attendance.isPresent() && attendance.get().getPresent()){
-            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,"Already it is marked as present");
+            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,ErrorMessage.ALREADY_PRESENT);
         }
         else if(attendance.isPresent() && !attendance.get().getPresent()){
             AttendanceModel model=attendance.get();
-            model.setPresent(true);
+            model.setPresent(BooleanFlag.TRUE);
             model.setTimein(TimeUtils.formatTime(LocalTime.now()));
             attendanceRepo.save(model);
         }
@@ -256,40 +263,41 @@ public class EmployeeServiceImpl implements EmployeeService {
         Optional<Employee> employee=employeeRepository.findById(id);
         Optional<Manager> manager=managerRepository.findById(leaveRequest.getManagerId());
         if (employee.isEmpty()){
-            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,"The employee does not exist");
+            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,ErrorMessage.EMPLOYEE_NOT_FOUND);
         }
         if (leaveRequest.getManagerId()!=employee.get().getManagerID()){
-            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,"Manager ID Does not exist");
+            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,ErrorMessage.MANAGER_NOT_FOUND);
         }
-        if(DateUtils.compareDates(leaveRequest.getEndDate(),leaveRequest.getStartDate(),false)){
-            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,"End date cannot be before Start Date");
+        if(DateUtils.compareDates(leaveRequest.getEndDate(),leaveRequest.getStartDate(), BooleanFlag.FALSE)){
+            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,ErrorMessage.END_DATE_BEFORE_START_DATE);
         }
-        if (DateUtils.compareDates(leaveRequest.getStartDate(),DateUtils.parseTodaysDate(),true)){
-            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,"Start date cannot be current date or previous date");
+        if (DateUtils.compareDates(leaveRequest.getStartDate(),DateUtils.parseTodaysDate(),BooleanFlag.TRUE)){
+            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,ErrorMessage.START_DATE_ERROR);
         }
         if (checkLeave(leaveRequest.getEndDate()) || checkLeave(leaveRequest.getStartDate())){
-            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,"This leave overlap with already approved leaves");
+            ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,ErrorMessage.OVERLAP_LEAVE);
         }
         leaveRequest.setLeaveStatus(LeaveStatus.PENDING);
-        emailService.sendSimpleMessage(manager.get().getEmail(),"LEAVE APPROVAL",employee.get().getName()+" applied for leave");
+        emailService.sendSimpleMessage(MailMessages.LEAVE_APPROVAL,employee.get().getName()+" applied for leave",manager.get().getEmail());
         leaveRepo.save(leaveRequest);
     }
 
     @Override
-    public void checkout(String id) {
+    public void checkout(Long id) {
         AttendanceModel attendanceModel;
-         if (attendanceRepo.findById(id).isPresent()) {
-             attendanceModel=attendanceRepo.findById(id).get();
+
+         if (attendanceRepo.findByDateAndId(DateUtils.parseTodaysDate(),id).isPresent()) {
+             attendanceModel=attendanceRepo.findByDateAndId(DateUtils.parseTodaysDate(),id).get();
              attendanceModel.setTimeout(TimeUtils.formatTime(LocalTime.now()));
              attendanceRepo.save(attendanceModel);
          }
-         else ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,"The attendance id does not exist");
+         else ExceptionUtils.sendMessage(HttpStatus.BAD_REQUEST,ErrorMessage.ATTENDANCE_ID_NOT_EXIST);
     }
 
     private boolean checkLeave(String date) {
         List<LeaveRequest> list=leaveRepo.findAll();
-        return list.stream().anyMatch((leaveRequest) -> DateUtils.compareDates(leaveRequest.getStartDate(),date,true) &&
-                DateUtils.compareDates(date,leaveRequest.getEndDate(),true) &&
+        return list.stream().anyMatch((leaveRequest) -> DateUtils.compareDates(leaveRequest.getStartDate(),date,BooleanFlag.TRUE) &&
+                DateUtils.compareDates(date,leaveRequest.getEndDate(),BooleanFlag.TRUE) &&
                 leaveRequest.getLeaveStatus().equals(LeaveStatus.APPROVED));
     }
 

@@ -1,5 +1,7 @@
 package com.javadeveloperzone.utils;
 
+import com.javadeveloperzone.constant.ErrorMessage;
+import com.javadeveloperzone.constant.TimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -9,13 +11,13 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.ResolverStyle;
 
 public class DateUtils {
-    private static final DateTimeFormatter dateTimeFormatter= DateTimeFormatter.ofPattern("uuuu-MM-dd").withResolverStyle(ResolverStyle.STRICT);
+    private static final DateTimeFormatter dateTimeFormatter= DateTimeFormatter.ofPattern(TimeFormat.DATE_PATTERN).withResolverStyle(ResolverStyle.STRICT);
     public static LocalDate parseDate(String date){
         try {
             dateTimeFormatter.parse(date);
             return LocalDate.parse(date,dateTimeFormatter);
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Date Entered is wrong");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ErrorMessage.WRONG_DATE);
         }
     }
     public static String parseTodaysDate(){

@@ -1,5 +1,7 @@
 package com.javadeveloperzone.component.JwtComponent;
 
+import com.javadeveloperzone.constant.CookieConstant;
+import com.javadeveloperzone.constant.ErrorMessage;
 import com.javadeveloperzone.service.AuthenticationService.UserExtend;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -12,7 +14,7 @@ import java.util.function.Function;
 
 @Component
 public class JWTTokenUtil {
-    public final static long JWT_TOKEN_VALIDITY=30* 24 * 60 * 60;
+    public final static long JWT_TOKEN_VALIDITY= CookieConstant.VALIDITY;
     @Value("${secret.key}")
     private String secret;
 
@@ -33,7 +35,7 @@ public class JWTTokenUtil {
         try {
             return Jwts.parser().setSigningKey(secret).parseClaimsJws(token).getBody();
         } catch (Exception e) {
-            throw new RuntimeException("The signature Does not match");
+            throw new RuntimeException(ErrorMessage.SIGNATURE_MISS_MATCH);
         }
     }
 
